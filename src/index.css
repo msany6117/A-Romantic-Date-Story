@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-script: "Dancing Script", cursive;
+
+  --color-romantic-canvas: #FDFCFB;
+  --color-romantic-charcoal: #1A1A1A;
+  --color-romantic-burgundy: #6D071A;
+  --color-romantic-mauve: #B5838D;
+  --color-romantic-rose: #E5989B;
+  --color-romantic-blush: #FDE2E4;
+  --color-romantic-cream: #FAD2E1;
+  --color-romantic-coral: #FFB7B2;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    color: #1A1A1A;
+    background-color: #FDFCFB;
+  }
+}
+
+/* Custom scrollbar and smooth animation touches */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(109, 7, 26, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(109, 7, 26, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

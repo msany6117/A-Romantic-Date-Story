@@ -1,0 +1,6 @@
+{
+  "name": "Interactive Romantic Date Story",
+  "description": "A cinematic, playful, and emotional interactive romantic date proposal and love story experience.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
