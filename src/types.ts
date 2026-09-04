@@ -33,6 +33,13 @@ export interface SiteConfig {
   proposalQuestion: string;
   noButtonMessages: string[];
   maxNoClicksBeforeSurrender: number;
+  reactionScene: {
+    badge: string;
+    title: string;
+    subtitle: string;
+    cardParagraphs: string[];
+    buttonText: string;
+  };
   memorySection: {
     title: string;
     subtitle: string;

@@ -44,7 +44,7 @@ export const MemoryScene: React.FC<MemorySceneProps> = ({ config, onNext }) => {
       <motion.div variants={slideUp} className="mb-8 sm:mb-10">
         <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#FDE2E4]/60 text-[#6D071A] text-xs font-semibold tracking-wider uppercase mb-3 border border-[#E5989B]/30">
           <Heart className="w-3.5 h-3.5 fill-[#6D071A] text-[#6D071A]" />
-          Chapter Two: Sweet Memories
+          Chapter Three: Sweet Memories
         </span>
         <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#1A1A1A] font-normal tracking-tight">
           {config.memorySection.title}

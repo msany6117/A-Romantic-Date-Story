@@ -16,6 +16,7 @@ import { CustomizerModal } from './components/CustomizerModal';
 import { IntroScene } from './scenes/IntroScene';
 import { PersonalIntroScene } from './scenes/PersonalIntroScene';
 import { ProposalScene } from './scenes/ProposalScene';
+import { ReactionScene } from './scenes/ReactionScene';
 import { MemoryScene } from './scenes/MemoryScene';
 import { DateTimeScene } from './scenes/DateTimeScene';
 import { LocationScene } from './scenes/LocationScene';
@@ -49,7 +50,7 @@ export default function App() {
         const saved = localStorage.getItem(STORAGE_KEYS.SCENE);
         if (saved !== null) {
           const parsed = parseInt(saved, 10);
-          if (!isNaN(parsed) && parsed >= 0 && parsed <= 9) {
+          if (!isNaN(parsed) && parsed >= 0 && parsed <= 10) {
             return parsed;
           }
         }
@@ -122,7 +123,7 @@ export default function App() {
   };
 
   const handleNextScene = () => {
-    setSceneIndex((prev) => Math.min(prev + 1, 9));
+    setSceneIndex((prev) => Math.min(prev + 1, 10));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -170,7 +171,7 @@ export default function App() {
             <ProposalScene key="scene-2" config={config} onAccept={handleNextScene} />
           )}
           {sceneIndex === 3 && (
-            <MemoryScene key="scene-3" config={config} onNext={handleNextScene} />
+            <ReactionScene key="scene-3" config={config} onNext={handleNextScene} />
           )}
           {sceneIndex === 4 && (
             <DateTimeScene

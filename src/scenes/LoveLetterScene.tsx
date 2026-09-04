@@ -40,7 +40,7 @@ export const LoveLetterScene: React.FC<LoveLetterSceneProps> = ({ config, onNext
       <motion.div variants={slideUp} className="mb-6">
         <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#FDE2E4]/60 text-[#6D071A] text-xs font-semibold tracking-wider uppercase mb-2 border border-[#E5989B]/30">
           <Feather className="w-3.5 h-3.5 text-[#6D071A]" />
-          Chapter Six: A Handwritten Note
+          Chapter Five: A Handwritten Note
         </span>
         <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#1A1A1A] font-normal tracking-tight">
           {letter.title}

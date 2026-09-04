@@ -33,6 +33,17 @@ export const defaultSiteConfig: SiteConfig = {
 
   maxNoClicksBeforeSurrender: 6,
 
+  reactionScene: {
+    badge: 'A Moment of Pure Joy',
+    title: 'Wait, seriously?! You actually said YES?! 🥹',
+    subtitle: 'I honestly cannot believe it... I genuinely thought you were going to say no!',
+    cardParagraphs: [
+      'My heart was pounding so fast while waiting for your answer. To be completely honest, I had prepared myself for you to say no! 🙈',
+      'Knowing that you said YES just made my entire world brighter. I promise to make our time together unforgettable.',
+    ],
+    buttonText: 'Let’s plan our date →',
+  },
+
   memorySection: {
     title: 'Before we plan our date...',
     subtitle: 'A few little moments that make me smile whenever I think of you.',

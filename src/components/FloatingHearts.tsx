@@ -30,7 +30,7 @@ export const FloatingHearts: React.FC<FloatingHeartsProps> = ({ sceneIndex }) =>
         return 'bg-[#FDFCFB]';
       case 2: // Proposal question
         return 'bg-[#FDFCFB]';
-      case 3: // Memories
+      case 3: // Reaction: She said yes!
         return 'bg-[#FDFCFB]';
       case 4: // Date & Time
         return 'bg-[#FDFCFB]';

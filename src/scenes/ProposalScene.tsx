@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useRef, useCallback } from 'react';
+import { motion } from 'motion/react';
 import { Heart, Sparkles } from 'lucide-react';
 import { SiteConfig } from '../types';
 import { pageTransition, slideUp, buttonPress } from '../animations/variants';
@@ -11,30 +11,86 @@ interface ProposalSceneProps {
   onAccept: () => void;
 }
 
+// Safe evasion coordinates that guarantee:
+// 1. Desktop: X is always positive (+35px to +140px), so it only moves to the right/down, NEVER left towards YES button.
+// 2. Mobile: Y is always positive (+30px to +65px), so it only moves downwards, NEVER up towards YES button.
+const DESKTOP_SAFE_OFFSETS = [
+  { x: 85, y: 15 },
+  { x: 130, y: 35 },
+  { x: 45, y: 50 },
+  { x: 110, y: -10 },
+  { x: 65, y: 40 },
+  { x: 140, y: 10 },
+  { x: 35, y: 45 },
+  { x: 105, y: 55 },
+];
+
+const MOBILE_SAFE_OFFSETS = [
+  { x: 45, y: 35 },
+  { x: -45, y: 35 },
+  { x: 30, y: 65 },
+  { x: -30, y: 65 },
+  { x: 0, y: 60 },
+  { x: 50, y: 45 },
+  { x: -50, y: 45 },
+];
+
 export const ProposalScene: React.FC<ProposalSceneProps> = ({ config, onAccept }) => {
-  const [noCount, setNoCount] = useState<number>(0);
-  const [noOffset, setNoOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [surrendered, setSurrendered] = useState<boolean>(false);
+  const [posIndex, setPosIndex] = useState<number>(0);
   const [isAccepted, setIsAccepted] = useState<boolean>(false);
+  const lastDodgeTime = useRef<number>(0);
 
-  const maxNo = config.maxNoClicksBeforeSurrender || 6;
+  // Safe evasion spots:
+  // Desktop: Only moves right/down/angles to the right, never colliding with YES or title.
+  // Mobile: Moves downwards and sideways, never jumping up over YES button.
+  const getNextPosition = useCallback((currentIndex: number) => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    const desktopPositions = [
+      { x: 95, y: 15 },
+      { x: 50, y: 55 },
+      { x: 135, y: -10 },
+      { x: 70, y: 35 },
+      { x: 120, y: 60 },
+      { x: 40, y: -20 },
+      { x: 145, y: 20 },
+      { x: 80, y: -15 },
+    ];
+    const mobilePositions = [
+      { x: 50, y: 35 },
+      { x: -50, y: 35 },
+      { x: 40, y: 65 },
+      { x: -40, y: 65 },
+      { x: 55, y: 50 },
+      { x: -55, y: 50 },
+      { x: 0, y: 70 },
+    ];
 
-  const handleNoInteraction = () => {
-    const nextCount = noCount + 1;
-    setNoCount(nextCount);
-    audioManager.playChime(349.23); // Playful lower soft tone
+    const positions = isMobile ? mobilePositions : desktopPositions;
+    const nextIdx = (currentIndex + 1) % positions.length;
+    return { pos: positions[nextIdx], nextIndex: nextIdx };
+  }, []);
 
-    if (nextCount >= maxNo) {
-      setSurrendered(true);
-      setNoOffset({ x: 0, y: 0 });
-      return;
+  const [coords, setCoords] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Swift & smooth dodge: triggers whenever cursor or finger attempts to touch the button
+  const handleDodge = useCallback((e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
 
-    // Playful small dodge offset within bounds
-    const randomX = (Math.random() - 0.5) * 160;
-    const randomY = (Math.random() - 0.5) * 80;
-    setNoOffset({ x: randomX, y: randomY });
-  };
+    const now = Date.now();
+    // 100ms cooldown prevents rapid re-entry jitter while allowing instant sequential jumps
+    if (now - lastDodgeTime.current < 100) return;
+    lastDodgeTime.current = now;
+
+    setPosIndex((prevIdx) => {
+      const { pos, nextIndex } = getNextPosition(prevIdx);
+      setCoords(pos);
+      audioManager.playChime(380 + (nextIndex % 6) * 35);
+      return nextIndex;
+    });
+  }, [getNextPosition]);
 
   const handleYes = () => {
     if (isAccepted) return;
@@ -44,16 +100,8 @@ export const ProposalScene: React.FC<ProposalSceneProps> = ({ config, onAccept }
 
     setTimeout(() => {
       onAccept();
-    }, 850);
+    }, 700);
   };
-
-  // Current cheeky message for NO button
-  const currentNoMessage = surrendered
-    ? 'Okay okay... YES! ❤️'
-    : config.noButtonMessages[noCount % config.noButtonMessages.length] || 'No 🙈';
-
-  // Yes button scale grows with each "No" attempt
-  const yesScale = Math.min(1 + noCount * 0.12, 1.4);
 
   return (
     <motion.section
@@ -63,7 +111,7 @@ export const ProposalScene: React.FC<ProposalSceneProps> = ({ config, onAccept }
       exit="exit"
       className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 py-16 text-center max-w-2xl mx-auto"
     >
-      <div className="w-full bg-white/90 backdrop-blur-md rounded-3xl p-8 sm:p-14 shadow-xl shadow-black/5 border border-[#1A1A1A]/5 relative overflow-hidden">
+      <div className="w-full bg-white/90 backdrop-blur-md rounded-3xl p-8 sm:p-14 pb-12 sm:pb-16 shadow-xl shadow-black/5 border border-[#1A1A1A]/5 relative overflow-hidden select-none">
         
         {/* Visual proposal illustration */}
         <motion.div
@@ -90,7 +138,7 @@ export const ProposalScene: React.FC<ProposalSceneProps> = ({ config, onAccept }
         </motion.div>
 
         {/* Clean Minimalism Pre-heading & Main Question */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <p className="text-[#B5838D] italic font-serif text-lg sm:text-xl mb-3">
             I have one tiny question...
           </p>
@@ -113,78 +161,49 @@ export const ProposalScene: React.FC<ProposalSceneProps> = ({ config, onAccept }
           </p>
         </div>
 
-        {/* Playful Banner if user is repeatedly clicking NO */}
-        <AnimatePresence>
-          {surrendered ? (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-3 bg-[#FDE2E4]/60 text-[#6D071A] rounded-2xl text-xs sm:text-sm font-medium border border-[#E5989B]/30"
-            >
-              Okay okay... I&apos;ll stop teasing you. Just say yes! 🥺❤️
-            </motion.div>
-          ) : noCount > 0 ? (
-            <motion.div
-              key={noCount}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              className="mb-6 text-xs sm:text-sm font-medium text-[#B5838D]"
-            >
-              Attempt {noCount}: Don&apos;t be shy!
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-
-        {/* Buttons Container */}
-        <div className="relative flex flex-col sm:flex-row items-center justify-center gap-6 min-h-[120px]">
-          {/* YES Button */}
+        {/* Buttons Container with stable layout footprint */}
+        <div className="relative flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 min-h-[90px] pb-4">
+          {/* YES Button - perfectly stable, elegant compact size */}
           <motion.button
             id="proposal-yes-btn"
             onClick={handleYes}
             variants={buttonPress}
-            whileHover="hover"
-            whileTap="tap"
-            style={{ transformOrigin: 'center' }}
-            animate={{ scale: isAccepted ? 1.15 : yesScale }}
-            className="group relative px-10 sm:px-12 py-4 sm:py-5 bg-[#6D071A] text-white rounded-full text-base sm:text-lg font-medium tracking-wide shadow-xl shadow-[#6D071A]/20 transition-transform hover:scale-105 active:scale-95 cursor-pointer z-20 flex items-center justify-center gap-2.5"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            animate={isAccepted ? { scale: 1.1 } : { scale: 1 }}
+            className="group relative px-7 sm:px-8 py-3 sm:py-3.5 bg-[#6D071A] text-white rounded-full text-sm sm:text-base font-medium tracking-wide shadow-md shadow-[#6D071A]/20 cursor-pointer z-20 flex items-center justify-center gap-2 whitespace-nowrap"
           >
             <span>YES, OF COURSE</span>
-            <Heart className="w-5 h-5 fill-white text-white" />
+            <Heart className="w-4 h-4 fill-white text-white" />
           </motion.button>
 
-          {/* NO Button with playful evasion */}
-          <motion.div
-            animate={{ x: noOffset.x, y: noOffset.y }}
-            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-            className="z-10"
-          >
-            <motion.button
-              id="proposal-no-btn"
-              onClick={surrendered ? handleYes : handleNoInteraction}
-              onMouseEnter={noCount > 1 && !surrendered ? handleNoInteraction : undefined}
-              className={`px-10 sm:px-12 py-4 sm:py-5 rounded-full text-base sm:text-lg font-medium transition-all duration-200 cursor-pointer ${
-                surrendered
-                  ? 'bg-[#E5989B] text-white shadow-md hover:bg-[#B5838D]'
-                  : 'border border-[#1A1A1A]/15 text-[#1A1A1A]/70 bg-white/70 hover:bg-black/5 hover:text-[#1A1A1A]'
-              }`}
+          {/* NO Button Slot - fixed dimensional wrapper prevents any layout shift */}
+          <div className="relative w-28 sm:w-32 h-11 sm:h-12 flex items-center justify-center">
+            <motion.div
+              animate={{ x: coords.x, y: coords.y }}
+              transition={{
+                type: 'spring',
+                stiffness: 450,
+                damping: 25,
+                mass: 0.7,
+              }}
+              className="absolute inset-0 z-10 flex items-center justify-center"
             >
-              <span>{currentNoMessage}</span>
-            </motion.button>
-          </motion.div>
+              <button
+                id="proposal-no-btn"
+                tabIndex={-1}
+                onMouseEnter={handleDodge}
+                onPointerEnter={handleDodge}
+                onTouchStart={handleDodge}
+                onPointerDown={handleDodge}
+                onClick={handleDodge}
+                className="w-full h-full rounded-full text-sm sm:text-base font-medium transition-colors border border-[#1A1A1A]/15 text-[#1A1A1A]/70 bg-white/95 hover:bg-black/5 hover:text-[#1A1A1A] cursor-pointer select-none shadow-xs flex items-center justify-center whitespace-nowrap active:scale-95"
+              >
+                <span>No? 😭</span>
+              </button>
+            </motion.div>
+          </div>
         </div>
-
-        {/* Escape hatch for extra comfort */}
-        {noCount > 2 && !surrendered && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8">
-            <button
-              onClick={handleYes}
-              className="text-xs text-[#B5838D] hover:text-[#6D071A] underline underline-offset-4 cursor-pointer transition-colors"
-            >
-              Okay, I changed my mind... YES! ❤️
-            </button>
-          </motion.div>
-        )}
       </div>
     </motion.section>
   );
